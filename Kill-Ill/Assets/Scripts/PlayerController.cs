@@ -16,21 +16,45 @@ public class PlayerController : MonoBehaviour
     private Vector3 velocity;
     private float xRotation = 0f;
 
+    private bool isUIOpen = false;
+    [SerializeField] private GameObject UI;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        UI.SetActive(false);
     }
 
     void Update()
     {
         HandleMovement();
         HandleMouseLook();
+
+        if (Input.GetKeyDown(KeyCode.Tab)) //this is temporary the interaction UI will pop up when you talk to an NPC. Although being able to pull up the notes at any time would be cool so I can have it be seperate - Ethan
+        {
+            isUIOpen = !isUIOpen;
+            UI.SetActive(isUIOpen);
+
+            if (isUIOpen)
+            {
+                Cursor.lockState = CursorLockMode.Confined;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
     }
 
     void HandleMovement()
     {
+        if (isUIOpen)
+            return;
+
         bool isGrounded = controller.isGrounded;
 
         if (isGrounded && velocity.y < 0)
@@ -54,6 +78,9 @@ public class PlayerController : MonoBehaviour
 
     void HandleMouseLook()
     {
+        if (isUIOpen)
+            return;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
