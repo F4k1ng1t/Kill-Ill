@@ -15,21 +15,19 @@ public class NPCPathfinding : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
     private void FixedUpdate()
     {
         //wander around after a random interval, set movement chance to 1 to always wander
+        if (!wander)
+            return;
+
         tick++;
         if (tick == 100 && wander)
         {
             tick = 0;
             if (Random.Range(0, movementChance) == 0)
             {
-                destinationPoint.position = new Vector3(Random.Range(-wanderRadius, wanderRadius), 0, Random.Range(-wanderRadius, wanderRadius));
+                destinationPoint.localPosition = new Vector3(Random.Range(-wanderRadius, wanderRadius), 0, Random.Range(-wanderRadius, wanderRadius));
                 agent.SetDestination(destinationPoint.position);
             }
         }
@@ -43,10 +41,17 @@ public class NPCPathfinding : MonoBehaviour
     public void SetWander(bool state)
     {
         wander = state;
+        agent.isStopped = !state;
+
     }
-    public void MoveToPoint()
+
+    public void StartInteraction()
     {
         SetWander(false);
-        agent.SetDestination(destinationPoint.position);
+    }
+
+    public void EndInteraction()
+    {
+        SetWander(true);
     }
 }
