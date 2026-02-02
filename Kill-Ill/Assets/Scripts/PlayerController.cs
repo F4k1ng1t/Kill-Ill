@@ -11,6 +11,27 @@ public class PlayerController : MonoBehaviour
     [Header("Mouse Look")]
     public float mouseSensitivity = 100f;
     public Transform cameraTransform;
+    [SerializeField] private LayerMask npcLayer;
+
+
+    //Interaction stuff
+    [SerializeField] private GameObject canInteractText;
+    private NPCPersona selectedNPC;
+    private bool isInteracting = false;
+    private bool _canInteract = false;
+    private bool canInteract
+    {
+        set
+        {
+            _canInteract = value;
+            canInteractText.SetActive(_canInteract);
+        }
+
+        get
+        {
+            return _canInteract;
+        }
+    }
 
     private CharacterController controller;
     private Vector3 velocity;
@@ -18,6 +39,7 @@ public class PlayerController : MonoBehaviour
 
     private bool isUIOpen = false;
     [SerializeField] private GameObject UI;
+    
 
     void Start()
     {
@@ -31,23 +53,8 @@ public class PlayerController : MonoBehaviour
     {
         HandleMovement();
         HandleMouseLook();
-
-        if (Input.GetKeyDown(KeyCode.Tab)) //this is temporary the interaction UI will pop up when you talk to an NPC. Although being able to pull up the notes at any time would be cool so I can have it be seperate - Ethan
-        {
-            isUIOpen = !isUIOpen;
-            UI.SetActive(isUIOpen);
-
-            if (isUIOpen)
-            {
-                Cursor.lockState = CursorLockMode.Confined;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
+        HandleRaycastCheck();
+        HandleInteraction();
     }
 
     void HandleMovement()
@@ -89,5 +96,48 @@ public class PlayerController : MonoBehaviour
 
         cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
+    }
+
+    void HandleRaycastCheck()
+    {
+        Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        Ray ray = Camera.main.ScreenPointToRay(screenCenter);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 5f, npcLayer))
+        {
+            canInteract = true;
+            selectedNPC = hit.transform.GetComponent<NPCPersona>();
+            return;
+        }
+        canInteract = false;
+    }
+
+    void HandleInteraction()
+    {
+        if (Input.GetKeyDown(KeyCode.Tab)) //this is temporary the interaction UI will pop up when you talk to an NPC. Although being able to pull up the notes at any time would be cool so I can have it be seperate - Ethan
+        {
+            if (!isInteracting)
+            {
+                if (selectedNPC && canInteract)
+                {
+                    Cursor.lockState = CursorLockMode.Confined;
+                    Cursor.visible = true;
+                    isUIOpen = true;
+                    isInteracting = true;
+                    UI.SetActive(isUIOpen);
+                    selectedNPC.Interact();
+                }
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                isUIOpen = false;
+                isInteracting = false;
+                UI.SetActive(isUIOpen);
+                selectedNPC.Leave();
+            }
+        }
     }
 }
